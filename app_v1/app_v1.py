@@ -2,17 +2,25 @@
 
 # %% auto 0
 __all__ = ['tokenizer', 'text_encoder', 'vae', 'unet', 'q', 'r', 'height', 'width', 'num_inference_steps', 'guidance_scale',
-           'batch_size']
+           'batch_size', 'q_input', 'r_input', 'im', 'latents']
 
 # %% ../diffedit.ipynb 5
 import torch
 from transformers import CLIPTextModel, CLIPTokenizer
 import matplotlib.pyplot as plt
 from tqdm.auto import tqdm
-from PIL import Image
+import PIL
+from IPython.display import display
+import tsensor
+from lolviz import *
 
+import matplotlib as mpl
 import logging
 
+plt.rcParams["figure.figsize"] = (6,6)
+plt.rcParams["figure.dpi"] = 288
+
+logging.getLogger("matplotlib.font_manager").setLevel(logging.ERROR)
 logging.disable(logging.WARNING)
 torch.manual_seed(1);
 
@@ -39,3 +47,29 @@ width = 512
 num_inference_steps = 70
 guidance_scale = 7.5
 batch_size = 1
+
+# %% ../diffedit.ipynb 17
+q_input = tokenizer(
+    q, padding="max_length", max_length=tokenizer.model_max_length, 
+    truncation=True, return_tensors="pt"
+)
+r_input = tokenizer(
+    r, padding="max_length", max_length=tokenizer.model_max_length, 
+    truncation=True, return_tensors="pt"
+)
+
+# %% ../diffedit.ipynb 19
+im = PIL.Image.open('imgs/IMG_4104_512.jpg')
+
+# %% ../diffedit.ipynb 22
+torch.manual_seed(255)
+
+latents = torch.randn((batch_size, unet.in_channels, height // 8, width //8))
+latents = latents.to("cuda").half()
+latents.shape
+
+# %% ../diffedit.ipynb 23
+scheduler.set_timesteps(num_inference_steps)
+
+# %% ../diffedit.ipynb 24
+latents = latents * scheduler.init_noise_sigma
